@@ -1,0 +1,13 @@
+[package]
+name = "cloud-hypervisor-command-builder"
+version = "0.38.0-beta.1"
+edition = "2021"
+description = "Type safe command line builder for cloud-hypervisor"
+license = "MIT OR Apache-2.0"
+documentation = ""
+homepage = "https://github.com/adamflott/cloud-hypervisor-command-builder"
+repository = "https://github.com/adamflott/cloud-hypervisor-command-builder"
+rust-version = "1.76"
+
+[dependencies]
+bytesize = { version = "1.3.0", features = ["serde"] }
