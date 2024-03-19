@@ -1,12 +1,16 @@
 pub mod to_command;
 
-use bytesize::ByteSize;
 use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
 use std::path::PathBuf;
 
+use bytesize::ByteSize;
+use derive_builder::Builder;
+use serde::{Deserialize, Serialize};
+
 use crate::to_command::ToCommand;
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OnOff {
     On,
     Off,
@@ -25,12 +29,13 @@ impl Display for OnOff {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PathOrFileDescriptorOption {
     Path(PathBuf),
     Fd(usize),
 }
 
-#[derive(Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct CloudHypervisorInstance {
     bin_path: PathBuf,
     cpus: Option<Cpus>,
@@ -876,6 +881,21 @@ impl ToCommand for CloudHypervisorInstance {
     }
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option), default)]
+pub struct CpuAffinity {
+    pub vcpu: u8,
+    pub host_cpus: Vec<usize>,
+}
+
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option), default)]
+pub struct CpuFeatures {
+    pub amx: Option<bool>,
+}
+
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option), default)]
 pub struct CpuTopology {
     pub threads_per_core: u8,
     pub cores_per_die: u8,
@@ -883,67 +903,27 @@ pub struct CpuTopology {
     pub packages: u8,
 }
 
-pub struct CpuAffinity {
-    pub vcpu: u8,
-    pub host_cpus: Vec<u8>,
-}
-pub enum CpuFeatures {
-    Amx,
-}
-
-#[derive(Default)]
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option), default)]
 pub struct Cpus {
-    pub boot_vcpus: Option<u8>,
-    pub max_vcpus: Option<u8>,
+    pub boot: Option<u8>,
+    pub max: Option<u8>,
     pub topology: Option<CpuTopology>,
     pub kvm_hyperv: Option<OnOff>,
     pub max_phys_bits: Option<u8>,
     pub affinity: Option<Vec<CpuAffinity>>,
-    pub features: Option<Vec<CpuFeatures>>,
+    pub features: Option<CpuFeatures>,
 }
 
-impl Cpus {
-    pub fn new() -> Self {
-        Cpus { ..Self::default() }
-    }
-    pub fn boot(&mut self, boot: u8) -> &mut Self {
-        self.boot_vcpus = Some(boot);
-        self
-    }
-    pub fn max(&mut self, max: u8) -> &mut Self {
-        self.max_vcpus = Some(max);
-        self
-    }
-    pub fn topology(&mut self, topology: CpuTopology) -> &mut Self {
-        self.topology = Some(topology);
-        self
-    }
-    pub fn kvm_hyperv(&mut self, state: OnOff) -> &mut Self {
-        self.kvm_hyperv = Some(state);
-        self
-    }
-    pub fn max_phys_bits(&mut self, bits: u8) -> &mut Self {
-        self.max_phys_bits = Some(bits);
-        self
-    }
-    pub fn affinity(&mut self, affinity: Vec<CpuAffinity>) -> &mut Self {
-        self.affinity = Some(affinity);
-        self
-    }
-    pub fn features(&mut self, features: Vec<CpuFeatures>) -> &mut Self {
-        self.features = Some(features);
-        self
-    }
-}
 impl ToCommand for Cpus {
     fn to_command(&self) -> Vec<String> {
         let mut cmd = vec![];
 
         let mut arg: Vec<String> = vec![];
-        if let Some(boot) = self.boot_vcpus {
+        if let Some(boot) = self.boot {
             arg.push(format!("boot={}", boot));
         }
-        if let Some(max) = self.max_vcpus {
+        if let Some(max) = self.max {
             arg.push(format!("max={}", max));
         }
         if let Some(topology) = &self.topology {
@@ -980,9 +960,10 @@ impl ToCommand for Cpus {
         }
         if let Some(features) = &self.features {
             let mut farg = vec![];
-            for f in features {
-                match f {
-                    CpuFeatures::Amx => farg.push("amx"),
+
+            if let Some(amx) = features.amx {
+                if amx {
+                    farg.push("amx");
                 }
             }
             if !farg.is_empty() {
@@ -998,6 +979,8 @@ impl ToCommand for Cpus {
     }
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct Platform {
     pub num_pci_segments: Option<u8>,
     pub iommu_segments: Option<u8>,
@@ -1037,6 +1020,7 @@ impl ToCommand for Platform {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum MemoryHotplugMethod {
     Acpi,
     VirtioMem,
@@ -1054,6 +1038,8 @@ impl Display for MemoryHotplugMethod {
         }
     }
 }
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct Memory {
     pub size: Option<ByteSize>,
     pub mergeable: Option<OnOff>,
@@ -1121,6 +1107,8 @@ impl ToCommand for Memory {
     }
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct MemoryZone {
     pub size: Option<ByteSize>,
     pub file: Option<PathBuf>,
@@ -1188,6 +1176,8 @@ impl ToCommand for MemoryZone {
     }
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct RateLimitGroup {
     pub bw_size: Option<ByteSize>,
     pub bw_one_time_burst: Option<ByteSize>,
@@ -1198,6 +1188,8 @@ pub struct RateLimitGroup {
     pub id: Option<String>,
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct Disk {
     pub path: Option<PathBuf>,
     pub readonly: Option<OnOff>,
@@ -1219,6 +1211,7 @@ pub struct Disk {
     pub queue_affinity: Option<String>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum VhostMode {
     Client,
     Server,
@@ -1236,6 +1229,8 @@ impl Display for VhostMode {
         }
     }
 }
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct Net {
     pub tap: Option<String>,
     pub ip: Option<IpAddr>,
@@ -1260,17 +1255,22 @@ pub struct Net {
     pub offload_ufo: Option<OnOff>,
     pub offload_csum: Option<OnOff>,
 }
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Rng {
     Src(PathBuf),
     Iommu(OnOff),
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct Balloon {
     pub size: Option<ByteSize>,
     pub deflate_on_oom: Option<OnOff>,
     pub free_page_reporting: Option<OnOff>,
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct Fs {
     pub tag: Option<String>,
     pub socket: Option<PathBuf>,
@@ -1280,6 +1280,8 @@ pub struct Fs {
     pub pci_segment: Option<String>,
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct Pmem {
     pub file: Option<PathBuf>,
     pub size: Option<usize>,
@@ -1289,6 +1291,7 @@ pub struct Pmem {
     pub pci_segment: Option<String>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Serial {
     Off,
     Null,
@@ -1297,6 +1300,7 @@ pub enum Serial {
     File(PathBuf),
     Socket(PathBuf),
 }
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum Console {
     Off,
     Null,
@@ -1306,18 +1310,24 @@ pub enum Console {
     Iommu(OnOff),
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct Device {
     pub path: Option<PathBuf>,
     pub iommu: Option<OnOff>,
     pub id: Option<String>,
     pub pci_segment: Option<String>,
 }
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct UserDevice {
     pub socket: Option<PathBuf>,
     pub id: Option<String>,
     pub pci_segment: Option<String>,
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct Vdpa {
     pub path: Option<PathBuf>,
     pub num_queues: Option<usize>,
@@ -1325,6 +1335,8 @@ pub struct Vdpa {
     pub id: Option<String>,
     pub pci_segment: Option<String>,
 }
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct Vsock {
     pub cid: Option<String>,
     pub socket: Option<PathBuf>,
@@ -1333,6 +1345,8 @@ pub struct Vsock {
     pub pci_segment: Option<String>,
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct Numa {
     pub guest_numa_id: Option<String>,
     pub cpus: Option<Vec<usize>>,
@@ -1342,22 +1356,28 @@ pub struct Numa {
     pub pci_segments: Option<Vec<String>>,
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct Restore {
     pub source_url: Option<String>,
     pub prefault: Option<OnOff>,
 }
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum SecComp {
     True,
     False,
     Log,
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct SgxEpc {
     pub id: Option<String>,
     pub size: Option<String>,
     pub prefault: Option<OnOff>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub enum DebugConsoleType {
     Off,
     Pty,
@@ -1365,6 +1385,8 @@ pub enum DebugConsoleType {
     File(PathBuf),
 }
 
+#[derive(Builder, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[builder(setter(strip_option, into), default)]
 pub struct DebugConsole {
     pub console_type: Option<DebugConsoleType>,
     pub iobase: Option<String>,

@@ -2,14 +2,14 @@ use std::path::PathBuf;
 
 use cloud_hypervisor_command_builder::to_command::ToCommand;
 use cloud_hypervisor_command_builder::{
-    CloudHypervisorInstance, CpuAffinity, CpuFeatures, CpuTopology, Cpus, OnOff,
+    CloudHypervisorInstance, CpuAffinity, CpuFeatures, CpuTopology, CpusBuilder, OnOff,
 };
 
 #[test]
 fn cpu() {
     let mut ch = CloudHypervisorInstance::new(PathBuf::from("/cloud-hypervisor"));
 
-    let mut cpus = Cpus::new();
+    let mut cpus = CpusBuilder::default();
     cpus.boot(2);
     cpus.max(4);
     cpus.topology(CpuTopology {
@@ -30,9 +30,9 @@ fn cpu() {
             host_cpus: vec![3, 4, 5],
         },
     ]);
-    cpus.features(vec![CpuFeatures::Amx]);
+    cpus.features(CpuFeatures { amx: Some(true) });
 
-    ch.cpus(cpus);
+    ch.cpus(cpus.build().unwrap());
 
     let expected = [
         "/cloud-hypervisor",

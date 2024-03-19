@@ -3,84 +3,87 @@ use std::path::PathBuf;
 
 use cloud_hypervisor_command_builder::to_command::ToCommand;
 use cloud_hypervisor_command_builder::{
-    Balloon, CloudHypervisorInstance, Console, Cpus, DebugConsole, Device, Fs, Memory,
-    MemoryHotplugMethod, OnOff, PathOrFileDescriptorOption, Platform, Rng, SecComp, Serial, SgxEpc,
-    UserDevice, Vdpa, Vsock,
+    BalloonBuilder, CloudHypervisorInstance, Console, CpusBuilder, DebugConsole, DeviceBuilder,
+    DiskBuilder, FsBuilder, MemoryBuilder, MemoryHotplugMethod, OnOff, PathOrFileDescriptorOption,
+    PlatformBuilder, Rng, SecComp, Serial, SgxEpc, UserDeviceBuilder, Vdpa, Vsock,
 };
 
 #[test]
 fn full_command_line() {
     let mut ch = CloudHypervisorInstance::new(PathBuf::from("/cloud-hypervisor"));
 
-    let cpus = Cpus {
-        boot_vcpus: None,
-        max_vcpus: None,
-        topology: None,
-        kvm_hyperv: None,
-        max_phys_bits: None,
-        affinity: None,
-        features: None,
-    };
+    let cpus = CpusBuilder::default().build().unwrap();
     ch.cpus(cpus);
 
-    let platform = Platform {
-        num_pci_segments: Some(10),
-        iommu_segments: Some(8),
-        serial_number: Some("some_serial".to_string()),
-        uuid: Some("uuid".to_string()),
-        oem_strings: Some(vec!["oem_string".to_string()]),
-    };
+    let platform = PlatformBuilder::default()
+        .num_pci_segments(10)
+        .iommu_segments(8)
+        .serial_number("some_serial")
+        .uuid("uuid")
+        .oem_strings(vec!["oem_string".to_string()])
+        .build()
+        .unwrap();
     ch.platform(platform);
 
-    ch.memory(Memory {
-        size: Some(ByteSize::gb(4)),
-        mergeable: Some(OnOff::On),
-        shared: Some(OnOff::Off),
-        hugepages: Some(OnOff::On),
-        hugepage_size: Some(ByteSize::mb(2)),
-        hotplug_method: Some(MemoryHotplugMethod::VirtioMem),
-        hotplug_size: Some(ByteSize::mb(64)),
-        hotplugged_size: Some(ByteSize::mb(24)),
-        prefault: Some(OnOff::Off),
-        thp: Some(OnOff::On),
-    });
+    ch.memory(
+        MemoryBuilder::default()
+            .size(ByteSize::gb(4))
+            .mergeable(OnOff::On)
+            .shared(OnOff::Off)
+            .hugepages(OnOff::On)
+            .hugepage_size(ByteSize::mb(2))
+            .hotplug_method(MemoryHotplugMethod::VirtioMem)
+            .hotplug_size(ByteSize::mb(64))
+            .hotplugged_size(ByteSize::mb(24))
+            .prefault(OnOff::Off)
+            .thp(OnOff::On)
+            .build()
+            .unwrap(),
+    );
 
     ch.firmware(PathBuf::from("/firmware"));
     ch.kernel(PathBuf::from("/kernel"));
     ch.initramfs(PathBuf::from("/initramfs"));
     ch.cmdline("--whatever".to_string());
 
+    let disk0 = DiskBuilder::default()
+        .path(PathBuf::from("/dev/disk0"))
+        .build()
+        .unwrap();
+    ch.disk(disk0);
+    let disk1 = DiskBuilder::default()
+        .path(PathBuf::from("/dev/disk1"))
+        .id("1")
+        .build()
+        .unwrap();
+    ch.disk(disk1);
+
     ch.rng(Rng::Src(PathBuf::from("/dev/urandom")));
 
-    ch.balloon(Balloon {
-        size: Some(ByteSize::mb(100)),
-        deflate_on_oom: Some(OnOff::On),
-        free_page_reporting: Some(OnOff::Off),
-    });
+    ch.balloon(
+        BalloonBuilder::default()
+            .size(ByteSize::mb(100))
+            .deflate_on_oom(OnOff::On)
+            .free_page_reporting(OnOff::Off)
+            .build()
+            .unwrap(),
+    );
 
-    ch.fs(Fs {
-        tag: None,
-        socket: None,
-        num_queues: None,
-        queue_size: None,
-        id: None,
-        pci_segment: None,
-    });
+    ch.fs(FsBuilder::default().build().unwrap());
     ch.serial(Serial::Null);
     ch.console(Console::Pty);
 
-    ch.device(Device {
-        path: Some(PathBuf::from("/dev/something")),
-        iommu: Some(OnOff::Off),
-        id: Some("dev_id_1".to_string()),
-        pci_segment: Some("pci1".to_string()),
-    });
+    ch.device(
+        DeviceBuilder::default()
+            .path(PathBuf::from("/dev/something"))
+            .iommu(OnOff::Off)
+            .id("dev_id_1".to_string())
+            .pci_segment("pci1".to_string())
+            .build()
+            .unwrap(),
+    );
 
-    ch.user_device(UserDevice {
-        socket: None,
-        id: None,
-        pci_segment: None,
-    });
+    ch.user_device(UserDeviceBuilder::default().build().unwrap());
 
     ch.pvpanic(true);
 
@@ -134,6 +137,8 @@ fn full_command_line() {
         "--kernel", "/kernel",
         "--initramfs", "/initramfs",
         "--cmdline", "--whatever",
+        "--disk", "path=/dev/disk0",
+        "path=/dev/disk1,id=1",
         "--rng", "src=/dev/urandom",
         "--balloon", "size=100000000,deflate_on_oom=on,free_page_reporting=off",
         "--serial", "null",
