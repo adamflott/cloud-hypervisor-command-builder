@@ -5,7 +5,7 @@ use cloud_hypervisor_command_builder::to_command::ToCommand;
 use cloud_hypervisor_command_builder::{
     BalloonBuilder, CloudHypervisorInstance, Console, CpusBuilder, DebugConsole, DeviceBuilder,
     DiskBuilder, FsBuilder, MemoryBuilder, MemoryHotplugMethod, OnOff, PathOrFileDescriptorOption,
-    PlatformBuilder, Rng, SecComp, Serial, SgxEpc, UserDeviceBuilder, Vdpa, Vsock,
+    PlatformBuilder, Rng, SecComp, Serial, SgxEpc, UserDeviceBuilder, VdpaBuilder, Vsock,
 };
 
 #[test]
@@ -107,13 +107,23 @@ fn full_command_line() {
         pci_segment: None,
     });
 
-    ch.vdpa(Vdpa {
-        path: Some(PathBuf::from("/dev/vdpa1")),
-        num_queues: None,
-        iommu: None,
-        id: None,
-        pci_segment: None,
-    });
+    ch.vdpa(
+        VdpaBuilder::default()
+            .path(PathBuf::from("/dev/vdpa1"))
+            .num_queues(1usize)
+            .iommu(OnOff::On)
+            .id("id1")
+            .pci_segment("01")
+            .build()
+            .unwrap(),
+    );
+
+    ch.vdpa(
+        VdpaBuilder::default()
+            .path(PathBuf::from("/dev/vdpa2"))
+            .build()
+            .unwrap(),
+    );
 
     ch.sgx_epc(SgxEpc {
         id: None,
@@ -137,15 +147,14 @@ fn full_command_line() {
         "--kernel", "/kernel",
         "--initramfs", "/initramfs",
         "--cmdline", "--whatever",
-        "--disk", "path=/dev/disk0",
-        "path=/dev/disk1,id=1",
+        "--disk", "path=/dev/disk0", "path=/dev/disk1,id=1",
         "--rng", "src=/dev/urandom",
         "--balloon", "size=100000000,deflate_on_oom=on,free_page_reporting=off",
         "--serial", "null",
         "--console", "pty",
         "--device", "path=/dev/something,iommu=off,id=dev_id_1,pci_segment=pci1",
         "--vsock", "socket=/dev/vsock",
-        "--vdpa", "path=/dev/vdpa1",
+        "--vdpa", "path=/dev/vdpa1,num_queues=1,iommu=on,id=id1,pci_segment=01", "path=/dev/vdpa2",
         "--pvpanic",
         "--watchdog",
         "--log-file", "/ch.log",

@@ -355,146 +355,161 @@ impl ToCommand for CloudHypervisorInstance {
             }
         }
         if let Some(disks) = &self.disk {
-            let mut arg = vec![];
-            for disk in disks {
-                if let Some(path) = &disk.path {
-                    arg.push(format!("path={}", path.display()));
-                }
-                if let Some(readonly) = &disk.readonly {
-                    arg.push(format!("readonly={}", readonly));
-                }
-                if let Some(direct) = &disk.direct {
-                    arg.push(format!("direct={}", direct));
-                }
-                if let Some(iommu) = &disk.iommu {
-                    arg.push(format!("iommu={}", iommu));
-                }
-                if let Some(num_queues) = &disk.num_queues {
-                    arg.push(format!("num_queues={}", num_queues));
-                }
-                if let Some(queue_size) = &disk.queue_size {
-                    arg.push(format!("queue_size={}", queue_size));
-                }
-                if let Some(vhost_user) = &disk.vhost_user {
-                    arg.push(format!("vhost_user={}", vhost_user));
-                }
-                if let Some(socket) = &disk.socket {
-                    arg.push(format!("socket={}", socket.display()));
-                }
-                if let Some(bw_size) = &disk.bw_size {
-                    arg.push(format!("bw_size={}", bw_size.0));
-                }
-                if let Some(bw_one_time_burst) = &disk.bw_one_time_burst {
-                    arg.push(format!("bw_one_time_burst={}", bw_one_time_burst));
-                }
-                if let Some(bw_refill_time) = &disk.bw_refill_time {
-                    arg.push(format!("bw_refill_time={}", bw_refill_time));
-                }
-                if let Some(ops_size) = &disk.ops_size {
-                    arg.push(format!("ops_size={}", ops_size));
-                }
-                if let Some(ops_one_time_burst) = &disk.ops_one_time_burst {
-                    arg.push(format!("ops_one_time_burst={}", ops_one_time_burst));
-                }
-                if let Some(ops_refill_time) = &disk.ops_refill_time {
-                    arg.push(format!("ops_refill_time={}", ops_refill_time));
-                }
-                if let Some(id) = &disk.id {
-                    arg.push(format!("id={}", id));
-                }
-                if let Some(pci_segment) = &disk.pci_segment {
-                    arg.push(format!("pci_segment={}", pci_segment));
-                }
-                if let Some(rate_limit_group) = &disk.rate_limit_group {
-                    arg.push(format!("rate_limit_group={}", rate_limit_group));
-                }
-                if let Some(queue_affinity) = &disk.queue_affinity {
-                    arg.push(format!("queue_affinity={}", queue_affinity));
-                }
-                if !arg.is_empty() {
-                    cmd.push("--disk".to_string());
-                    cmd.push(arg.join(","));
+            if !disks.is_empty() {
+                let mut added = false;
+
+                for disk in disks {
+                    let mut arg = vec![];
+                    if let Some(path) = &disk.path {
+                        arg.push(format!("path={}", path.display()));
+                    }
+                    if let Some(readonly) = &disk.readonly {
+                        arg.push(format!("readonly={}", readonly));
+                    }
+                    if let Some(direct) = &disk.direct {
+                        arg.push(format!("direct={}", direct));
+                    }
+                    if let Some(iommu) = &disk.iommu {
+                        arg.push(format!("iommu={}", iommu));
+                    }
+                    if let Some(num_queues) = &disk.num_queues {
+                        arg.push(format!("num_queues={}", num_queues));
+                    }
+                    if let Some(queue_size) = &disk.queue_size {
+                        arg.push(format!("queue_size={}", queue_size));
+                    }
+                    if let Some(vhost_user) = &disk.vhost_user {
+                        arg.push(format!("vhost_user={}", vhost_user));
+                    }
+                    if let Some(socket) = &disk.socket {
+                        arg.push(format!("socket={}", socket.display()));
+                    }
+                    if let Some(bw_size) = &disk.bw_size {
+                        arg.push(format!("bw_size={}", bw_size.0));
+                    }
+                    if let Some(bw_one_time_burst) = &disk.bw_one_time_burst {
+                        arg.push(format!("bw_one_time_burst={}", bw_one_time_burst));
+                    }
+                    if let Some(bw_refill_time) = &disk.bw_refill_time {
+                        arg.push(format!("bw_refill_time={}", bw_refill_time));
+                    }
+                    if let Some(ops_size) = &disk.ops_size {
+                        arg.push(format!("ops_size={}", ops_size));
+                    }
+                    if let Some(ops_one_time_burst) = &disk.ops_one_time_burst {
+                        arg.push(format!("ops_one_time_burst={}", ops_one_time_burst));
+                    }
+                    if let Some(ops_refill_time) = &disk.ops_refill_time {
+                        arg.push(format!("ops_refill_time={}", ops_refill_time));
+                    }
+                    if let Some(id) = &disk.id {
+                        arg.push(format!("id={}", id));
+                    }
+                    if let Some(pci_segment) = &disk.pci_segment {
+                        arg.push(format!("pci_segment={}", pci_segment));
+                    }
+                    if let Some(rate_limit_group) = &disk.rate_limit_group {
+                        arg.push(format!("rate_limit_group={}", rate_limit_group));
+                    }
+                    if let Some(queue_affinity) = &disk.queue_affinity {
+                        arg.push(format!("queue_affinity={}", queue_affinity));
+                    }
+                    if !arg.is_empty() {
+                        if !added {
+                            cmd.push("--disk".to_string());
+                            added = true;
+                        }
+                        cmd.push(arg.join(","));
+                    }
                 }
             }
         }
         if let Some(nets) = &self.net {
-            let mut arg = vec![];
-            for net in nets {
-                if let Some(tap) = &net.tap {
-                    arg.push(format!("tap={}", tap));
-                }
-                if let Some(ip) = &net.ip {
-                    arg.push(format!("ip={}", ip));
-                }
-                if let Some(mask) = &net.mask {
-                    arg.push(format!("mask={}", mask));
-                }
-                if let Some(mac) = &net.mac {
-                    arg.push(format!("mac={}", mac));
-                }
-                if let Some(fd) = &net.fd {
-                    arg.push(format!(
-                        "fd={}",
-                        fd.iter()
-                            .map(|v| v.to_string())
-                            .collect::<Vec<String>>()
-                            .join(",")
-                    ));
-                }
-                if let Some(iommu) = &net.iommu {
-                    arg.push(format!("iommu={}", iommu));
-                }
-                if let Some(num_queues) = &net.num_queues {
-                    arg.push(format!("num_queues={}", num_queues));
-                }
-                if let Some(queue_size) = &net.queue_size {
-                    arg.push(format!("queue_size={}", queue_size));
-                }
-                if let Some(id) = &net.id {
-                    arg.push(format!("id={}", id));
-                }
-                if let Some(vhost_user) = &net.vhost_user {
-                    arg.push(format!("vhost_user={}", vhost_user));
-                }
-                if let Some(socket) = &net.socket {
-                    arg.push(format!("socket={}", socket.display()));
-                }
-                if let Some(vhost_mode) = &net.vhost_mode {
-                    arg.push(format!("vhost_mode={}", vhost_mode));
-                }
-                if let Some(bw_size) = &net.bw_size {
-                    arg.push(format!("bw_size={}", bw_size.0));
-                }
-                if let Some(bw_one_time_burst) = &net.bw_one_time_burst {
-                    arg.push(format!("bw_one_time_burst={}", bw_one_time_burst));
-                }
-                if let Some(bw_refill_time) = &net.bw_refill_time {
-                    arg.push(format!("bw_refill_time={}", bw_refill_time));
-                }
-                if let Some(ops_size) = &net.ops_size {
-                    arg.push(format!("ops_size={}", ops_size));
-                }
-                if let Some(ops_one_time_burst) = &net.ops_one_time_burst {
-                    arg.push(format!("ops_one_time_burst={}", ops_one_time_burst));
-                }
-                if let Some(ops_refill_time) = &net.ops_refill_time {
-                    arg.push(format!("ops_refill_time={}", ops_refill_time));
-                }
-                if let Some(pci_segment) = &net.pci_segment {
-                    arg.push(format!("pci_segment={}", pci_segment));
-                }
-                if let Some(offload_tso) = &net.offload_tso {
-                    arg.push(format!("offload_tso={}", offload_tso));
-                }
-                if let Some(offload_ufo) = &net.offload_ufo {
-                    arg.push(format!("offload_ufo={}", offload_ufo));
-                }
-                if let Some(offload_csum) = &net.offload_csum {
-                    arg.push(format!("offload_csum={}", offload_csum));
-                }
-                if !arg.is_empty() {
-                    cmd.push("--net".to_string());
-                    cmd.push(arg.join(","));
+            if !nets.is_empty() {
+                let mut added = false;
+
+                for net in nets {
+                    let mut arg = vec![];
+
+                    if let Some(tap) = &net.tap {
+                        arg.push(format!("tap={}", tap));
+                    }
+                    if let Some(ip) = &net.ip {
+                        arg.push(format!("ip={}", ip));
+                    }
+                    if let Some(mask) = &net.mask {
+                        arg.push(format!("mask={}", mask));
+                    }
+                    if let Some(mac) = &net.mac {
+                        arg.push(format!("mac={}", mac));
+                    }
+                    if let Some(fd) = &net.fd {
+                        arg.push(format!(
+                            "fd={}",
+                            fd.iter()
+                                .map(|v| v.to_string())
+                                .collect::<Vec<String>>()
+                                .join(",")
+                        ));
+                    }
+                    if let Some(iommu) = &net.iommu {
+                        arg.push(format!("iommu={}", iommu));
+                    }
+                    if let Some(num_queues) = &net.num_queues {
+                        arg.push(format!("num_queues={}", num_queues));
+                    }
+                    if let Some(queue_size) = &net.queue_size {
+                        arg.push(format!("queue_size={}", queue_size));
+                    }
+                    if let Some(id) = &net.id {
+                        arg.push(format!("id={}", id));
+                    }
+                    if let Some(vhost_user) = &net.vhost_user {
+                        arg.push(format!("vhost_user={}", vhost_user));
+                    }
+                    if let Some(socket) = &net.socket {
+                        arg.push(format!("socket={}", socket.display()));
+                    }
+                    if let Some(vhost_mode) = &net.vhost_mode {
+                        arg.push(format!("vhost_mode={}", vhost_mode));
+                    }
+                    if let Some(bw_size) = &net.bw_size {
+                        arg.push(format!("bw_size={}", bw_size.0));
+                    }
+                    if let Some(bw_one_time_burst) = &net.bw_one_time_burst {
+                        arg.push(format!("bw_one_time_burst={}", bw_one_time_burst));
+                    }
+                    if let Some(bw_refill_time) = &net.bw_refill_time {
+                        arg.push(format!("bw_refill_time={}", bw_refill_time));
+                    }
+                    if let Some(ops_size) = &net.ops_size {
+                        arg.push(format!("ops_size={}", ops_size));
+                    }
+                    if let Some(ops_one_time_burst) = &net.ops_one_time_burst {
+                        arg.push(format!("ops_one_time_burst={}", ops_one_time_burst));
+                    }
+                    if let Some(ops_refill_time) = &net.ops_refill_time {
+                        arg.push(format!("ops_refill_time={}", ops_refill_time));
+                    }
+                    if let Some(pci_segment) = &net.pci_segment {
+                        arg.push(format!("pci_segment={}", pci_segment));
+                    }
+                    if let Some(offload_tso) = &net.offload_tso {
+                        arg.push(format!("offload_tso={}", offload_tso));
+                    }
+                    if let Some(offload_ufo) = &net.offload_ufo {
+                        arg.push(format!("offload_ufo={}", offload_ufo));
+                    }
+                    if let Some(offload_csum) = &net.offload_csum {
+                        arg.push(format!("offload_csum={}", offload_csum));
+                    }
+                    if !arg.is_empty() {
+                        if !added {
+                            cmd.push("--net".to_string());
+                            added = true;
+                        }
+                        cmd.push(arg.join(","));
+                    }
                 }
             }
         }
@@ -526,56 +541,71 @@ impl ToCommand for CloudHypervisorInstance {
             }
         }
         if let Some(fss) = &self.fs {
-            let mut arg = vec![];
-            for fs in fss {
-                if let Some(tag) = &fs.tag {
-                    arg.push(format!("tag={}", tag));
-                }
-                if let Some(socket) = &fs.socket {
-                    arg.push(format!("socket={}", socket.display()));
-                }
-                if let Some(num_queues) = &fs.num_queues {
-                    arg.push(format!("num_queues={}", num_queues));
-                }
-                if let Some(queue_size) = &fs.queue_size {
-                    arg.push(format!("queue_size={}", queue_size));
-                }
-                if let Some(id) = &fs.id {
-                    arg.push(format!("id={}", id));
-                }
-                if let Some(pci_segment) = &fs.pci_segment {
-                    arg.push(format!("pci_segment={}", pci_segment));
-                }
-                if !arg.is_empty() {
-                    cmd.push("--fs".to_string());
-                    cmd.push(arg.join(","));
+            if !fss.is_empty() {
+                let mut added = false;
+
+                for fs in fss {
+                    let mut arg = vec![];
+                    if let Some(tag) = &fs.tag {
+                        arg.push(format!("tag={}", tag));
+                    }
+                    if let Some(socket) = &fs.socket {
+                        arg.push(format!("socket={}", socket.display()));
+                    }
+                    if let Some(num_queues) = &fs.num_queues {
+                        arg.push(format!("num_queues={}", num_queues));
+                    }
+                    if let Some(queue_size) = &fs.queue_size {
+                        arg.push(format!("queue_size={}", queue_size));
+                    }
+                    if let Some(id) = &fs.id {
+                        arg.push(format!("id={}", id));
+                    }
+                    if let Some(pci_segment) = &fs.pci_segment {
+                        arg.push(format!("pci_segment={}", pci_segment));
+                    }
+                    if !arg.is_empty() {
+                        if !added {
+                            cmd.push("--fs".to_string());
+                            added = true;
+                        }
+                        cmd.push(arg.join(","));
+                    }
                 }
             }
         }
         if let Some(pmems) = &self.pmem {
-            let mut arg = vec![];
-            for pmem in pmems {
-                if let Some(path) = &pmem.file {
-                    arg.push(format!("file={}", path.display()));
-                }
-                if let Some(size) = &pmem.size {
-                    arg.push(format!("size={}", size));
-                }
-                if let Some(iommu) = &pmem.iommu {
-                    arg.push(format!("iommu={}", iommu));
-                }
-                if let Some(discard_writes) = &pmem.discard_writes {
-                    arg.push(format!("discard_writes={}", discard_writes));
-                }
-                if let Some(id) = &pmem.id {
-                    arg.push(format!("id={}", id));
-                }
-                if let Some(pci_segment) = &pmem.pci_segment {
-                    arg.push(format!("pci_segment={}", pci_segment));
-                }
-                if !arg.is_empty() {
-                    cmd.push("--pmem".to_string());
-                    cmd.push(arg.join(","));
+            if !pmems.is_empty() {
+                let mut added = false;
+
+                for pmem in pmems {
+                    let mut arg = vec![];
+
+                    if let Some(path) = &pmem.file {
+                        arg.push(format!("file={}", path.display()));
+                    }
+                    if let Some(size) = &pmem.size {
+                        arg.push(format!("size={}", size));
+                    }
+                    if let Some(iommu) = &pmem.iommu {
+                        arg.push(format!("iommu={}", iommu));
+                    }
+                    if let Some(discard_writes) = &pmem.discard_writes {
+                        arg.push(format!("discard_writes={}", discard_writes));
+                    }
+                    if let Some(id) = &pmem.id {
+                        arg.push(format!("id={}", id));
+                    }
+                    if let Some(pci_segment) = &pmem.pci_segment {
+                        arg.push(format!("pci_segment={}", pci_segment));
+                    }
+                    if !arg.is_empty() {
+                        if !added {
+                            cmd.push("--pmem".to_string());
+                            added = true;
+                        }
+                        cmd.push(arg.join(","));
+                    }
                 }
             }
         }
@@ -620,41 +650,57 @@ impl ToCommand for CloudHypervisorInstance {
             }
         }
         if let Some(devices) = &self.device {
-            for device in devices {
-                let mut arg = vec![];
-                if let Some(path) = &device.path {
-                    arg.push(format!("path={}", path.display()));
-                }
-                if let Some(iommu) = &device.iommu {
-                    arg.push(format!("iommu={}", iommu));
-                }
-                if let Some(id) = &device.id {
-                    arg.push(format!("id={}", id));
-                }
-                if let Some(pci_segment) = &device.pci_segment {
-                    arg.push(format!("pci_segment={}", pci_segment));
-                }
-                if !arg.is_empty() {
-                    cmd.push("--device".to_string());
-                    cmd.push(arg.join(","));
+            if !devices.is_empty() {
+                let mut added = false;
+
+                for device in devices {
+                    let mut arg = vec![];
+
+                    if let Some(path) = &device.path {
+                        arg.push(format!("path={}", path.display()));
+                    }
+                    if let Some(iommu) = &device.iommu {
+                        arg.push(format!("iommu={}", iommu));
+                    }
+                    if let Some(id) = &device.id {
+                        arg.push(format!("id={}", id));
+                    }
+                    if let Some(pci_segment) = &device.pci_segment {
+                        arg.push(format!("pci_segment={}", pci_segment));
+                    }
+                    if !arg.is_empty() {
+                        if !added {
+                            cmd.push("--device".to_string());
+                            added = true;
+                        }
+                        cmd.push(arg.join(","));
+                    }
                 }
             }
         }
         if let Some(user_devices) = &self.user_device {
-            for user_device in user_devices {
-                let mut arg = vec![];
-                if let Some(path) = &user_device.socket {
-                    arg.push(format!("socket={}", path.display()));
-                }
-                if let Some(id) = &user_device.id {
-                    arg.push(format!("id={}", id));
-                }
-                if let Some(pci_segment) = &user_device.pci_segment {
-                    arg.push(format!("pci_segment={}", pci_segment));
-                }
-                if !arg.is_empty() {
-                    cmd.push("--user-device".to_string());
-                    cmd.push(arg.join(","));
+            if !user_devices.is_empty() {
+                let mut added = false;
+
+                for user_device in user_devices {
+                    let mut arg = vec![];
+
+                    if let Some(path) = &user_device.socket {
+                        arg.push(format!("socket={}", path.display()));
+                    }
+                    if let Some(id) = &user_device.id {
+                        arg.push(format!("id={}", id));
+                    }
+                    if let Some(pci_segment) = &user_device.pci_segment {
+                        arg.push(format!("pci_segment={}", pci_segment));
+                    }
+                    if !arg.is_empty() {
+                        if !added {
+                            cmd.push("--user-device".to_string());
+                            added = true;
+                        }
+                        cmd.push(arg.join(","));
+                    }
                 }
             }
         }
@@ -681,26 +727,33 @@ impl ToCommand for CloudHypervisorInstance {
             }
         }
         if let Some(vdpas) = &self.vdpa {
-            for vdpa in vdpas {
-                let mut arg = vec![];
-                if let Some(path) = &vdpa.path {
-                    arg.push(format!("path={}", path.display()));
-                }
-                if let Some(num_queues) = &vdpa.num_queues {
-                    arg.push(format!("num_queues={}", num_queues));
-                }
-                if let Some(iommu) = &vdpa.iommu {
-                    arg.push(format!("iommu={}", iommu));
-                }
-                if let Some(id) = &vdpa.id {
-                    arg.push(format!("id={}", id));
-                }
-                if let Some(pci_segment) = &vdpa.pci_segment {
-                    arg.push(format!("pci_segment={}", pci_segment));
-                }
-                if !arg.is_empty() {
-                    cmd.push("--vdpa".to_string());
-                    cmd.push(arg.join(","));
+            if !vdpas.is_empty() {
+                let mut added = false;
+
+                for vdpa in vdpas {
+                    let mut arg = vec![];
+                    if let Some(path) = &vdpa.path {
+                        arg.push(format!("path={}", path.display()));
+                    }
+                    if let Some(num_queues) = &vdpa.num_queues {
+                        arg.push(format!("num_queues={}", num_queues));
+                    }
+                    if let Some(iommu) = &vdpa.iommu {
+                        arg.push(format!("iommu={}", iommu));
+                    }
+                    if let Some(id) = &vdpa.id {
+                        arg.push(format!("id={}", id));
+                    }
+                    if let Some(pci_segment) = &vdpa.pci_segment {
+                        arg.push(format!("pci_segment={}", pci_segment));
+                    }
+                    if !arg.is_empty() {
+                        if !added {
+                            cmd.push("--vdpa".to_string());
+                            added = true;
+                        }
+                        cmd.push(arg.join(","));
+                    }
                 }
             }
         }
@@ -710,63 +763,70 @@ impl ToCommand for CloudHypervisorInstance {
             }
         }
         if let Some(numas) = &self.numa {
-            for numa in numas {
-                let mut arg = vec![];
-                if let Some(guest_numa_id) = &numa.guest_numa_id {
-                    arg.push(format!("guest_numa_id={}", guest_numa_id));
-                }
-                if let Some(cpus) = &numa.cpus {
-                    arg.push(format!(
-                        "cpus={}",
-                        cpus.iter()
-                            .map(|v| v.to_string())
-                            .collect::<Vec<String>>()
-                            .join(",")
-                    ));
-                }
-                if let Some(distances) = &numa.distances {
-                    arg.push(format!(
-                        "distances={}",
-                        distances
-                            .iter()
-                            .map(|v| v.to_string())
-                            .collect::<Vec<String>>()
-                            .join(",")
-                    ));
-                }
-                if let Some(memory_zones) = &numa.memory_zones {
-                    arg.push(format!(
-                        "memory_zones={}",
-                        memory_zones
-                            .iter()
-                            .map(|v| v.to_string())
-                            .collect::<Vec<String>>()
-                            .join(",")
-                    ));
-                }
-                if let Some(sgx_epc_sections) = &numa.sgx_epc_sections {
-                    arg.push(format!(
-                        "sgx_epc_sections={}",
-                        sgx_epc_sections
-                            .iter()
-                            .map(|v| v.to_string())
-                            .collect::<Vec<String>>()
-                            .join(",")
-                    ));
-                }
-                if let Some(pci_segments) = &numa.pci_segments {
-                    arg.push(format!(
-                        "pci_segments={}",
-                        pci_segments
-                            .iter()
-                            .map(|v| v.to_string())
-                            .collect::<Vec<String>>()
-                            .join(",")
-                    ));
-                }
-                if !arg.is_empty() {
-                    cmd.push("--numa".to_string());
-                    cmd.push(arg.join(","));
+            if !numas.is_empty() {
+                let mut added = false;
+
+                for numa in numas {
+                    let mut arg = vec![];
+                    if let Some(guest_numa_id) = &numa.guest_numa_id {
+                        arg.push(format!("guest_numa_id={}", guest_numa_id));
+                    }
+                    if let Some(cpus) = &numa.cpus {
+                        arg.push(format!(
+                            "cpus={}",
+                            cpus.iter()
+                                .map(|v| v.to_string())
+                                .collect::<Vec<String>>()
+                                .join(",")
+                        ));
+                    }
+                    if let Some(distances) = &numa.distances {
+                        arg.push(format!(
+                            "distances={}",
+                            distances
+                                .iter()
+                                .map(|v| v.to_string())
+                                .collect::<Vec<String>>()
+                                .join(",")
+                        ));
+                    }
+                    if let Some(memory_zones) = &numa.memory_zones {
+                        arg.push(format!(
+                            "memory_zones={}",
+                            memory_zones
+                                .iter()
+                                .map(|v| v.to_string())
+                                .collect::<Vec<String>>()
+                                .join(",")
+                        ));
+                    }
+                    if let Some(sgx_epc_sections) = &numa.sgx_epc_sections {
+                        arg.push(format!(
+                            "sgx_epc_sections={}",
+                            sgx_epc_sections
+                                .iter()
+                                .map(|v| v.to_string())
+                                .collect::<Vec<String>>()
+                                .join(",")
+                        ));
+                    }
+                    if let Some(pci_segments) = &numa.pci_segments {
+                        arg.push(format!(
+                            "pci_segments={}",
+                            pci_segments
+                                .iter()
+                                .map(|v| v.to_string())
+                                .collect::<Vec<String>>()
+                                .join(",")
+                        ));
+                    }
+                    if !arg.is_empty() {
+                        if !added {
+                            cmd.push("--numa".to_string());
+                            added = true;
+                        }
+                        cmd.push(arg.join(","));
+                    }
                 }
             }
         }
@@ -833,20 +893,27 @@ impl ToCommand for CloudHypervisorInstance {
             cmd.push(tpm.display().to_string());
         }
         if let Some(sgx_epcs) = &self.sgx_epc {
-            for sgx_epc in sgx_epcs {
-                let mut arg = vec![];
-                if let Some(id) = &sgx_epc.id {
-                    arg.push(format!("id={}", id));
-                }
-                if let Some(size) = &sgx_epc.size {
-                    arg.push(format!("size={}", size));
-                }
-                if let Some(prefault) = &sgx_epc.prefault {
-                    arg.push(format!("prefault={}", prefault));
-                }
-                if !arg.is_empty() {
-                    cmd.push("--sgx-epc".to_string());
-                    cmd.push(arg.join(","));
+            if !sgx_epcs.is_empty() {
+                let mut added = false;
+
+                for sgx_epc in sgx_epcs {
+                    let mut arg = vec![];
+                    if let Some(id) = &sgx_epc.id {
+                        arg.push(format!("id={}", id));
+                    }
+                    if let Some(size) = &sgx_epc.size {
+                        arg.push(format!("size={}", size));
+                    }
+                    if let Some(prefault) = &sgx_epc.prefault {
+                        arg.push(format!("prefault={}", prefault));
+                    }
+                    if !arg.is_empty() {
+                        if !added {
+                            cmd.push("--sgx-epc".to_string());
+                            added = true;
+                        }
+                        cmd.push(arg.join(","));
+                    }
                 }
             }
         }
