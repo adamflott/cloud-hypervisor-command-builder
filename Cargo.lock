@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "cloud-hypervisor-command-builder"
-version = "0.38.0-beta.1"
+version = "0.38.0-beta.2"
 dependencies = [
  "bytesize",
  "derive_builder",
